@@ -1,0 +1,83 @@
+Jacky Huang
+06/02/25
+CS544 - Computer Networks
+Proj-Part3b: Protocol Implementation
+
+# Smart Device Management Protocol (SMDP)
+
+SMDP is a lightweight custom protocol designed to manage smart devices using a central hub. It supports device registration, state reporting, command execution, and acknowledgments all over UDP using a simplified binary protocol format built on top of a QUIC-like design.
+
+This project simulates a smart device network using a custom protocol called SMDP. The server acts like a central hub, and devices (clients) connect to it using UDP. Each client sends a registration message with its ID, firmware version, and state. After that, it can send state updates like turning on or off.
+
+The server prints out messages it receives and sends back acknowledgments to confirm they were processed. You can run multiple clients at once to simulate multiple devices.
+
+In the future, this setup could be expanded to support things like firmware updates, more types of devices, or secure login. The message format was designed to be flexible, so it’s easy to add features later on.
+
+
+## Protocol Message Format
+
+Each message consists of:
+
+- 2-byte `message_type`
+- 2-byte `payload_length`
+- Binary payload (varies by message type)
+
+### Message Types
+
+| Type Name            | Hex Code |
+|----------------------|----------|
+| MSG_DEVICE_REGISTER  | 0x0001   |
+| MSG_DEVICE_STATE     | 0x0002   |
+| MSG_COMMAND_EXEC     | 0x0003   |
+| MSG_ACK              | 0x0004   |
+
+
+## Configuration Parameters
+
+### Server
+
+| Parameter | Description            | Required | Default |
+|-----------|------------------------|----------|---------|
+| --port    | UDP port to listen on  | No       | 5555    |
+
+### Client
+
+| Parameter | Description                   | Required | Default  |
+|-----------|-------------------------------|----------|----------|
+| --host    | Server hostname or IP address |   Yes    | *none*   |
+| --port    | Server port                   |   Yes    | *none*   |
+| --uuid    | Device unique ID              |   No     | abc123   |
+| --fw      | Firmware version              |   No     | v1.0     |
+| --state   | Initial state (0=off, 1=on)   |   No     | 1        |
+
+
+## How to Run
+
+### Requirements
+Python 3.x.x
+
+### 1. Start the Server
+python SMDP_Server.py
+### 2. In a new terminal, start a client
+python SMDP_Client.py --host localhost --port 5555
+
+
+## Extra Credit: Github
+The repo is publicly accessible at https://github.com/thejackyhuang/CS544-SMDP-Protocol-Implementation
+
+## Extra Credit: Design Excellence
+This project was built with a strong emphasis on clean design and future maintainability. The code is modular, with core protocol logic separated into its own file (SMDP_Protocol.py) to promote reuse across both client and server components. Clear comments are provided throughout the source code to explain the purpose of each function and major logic step. During development, care was taken to simplify byte-level operations using high-level Python functions, which makes the code easier to read and debug. All configuration values such as host, port, UUID, and firmware version are passed in as command-line arguments, avoiding any hardcoded values. The protocol itself is also designed for extensibility, with fixed-length fields and room for optional data to support future features. These decisions reflect thoughtful design aimed at making the project easy to understand, maintain, and extend which aligns with the goals of software design excellence.
+
+## Extra Credit: Reflection on Implementation
+Focusing on the hands-on implementation of SMDP revealed several important lessons and led to refinements in the original protocol specification submitted for Part 2:
+
+1. Message Parsing Simplicity
+Initially, the protocol used explicit struct formats and byte-level parsing for each message type. However, during implementation, I realized that managing complex struct.pack/unpack logic for every field introduced unnecessary friction. This led me to simplify the protocol layer by abstracting away byte operations into clean Python functions, making development and debugging far easier.
+
+2. Protocol Header Adjustments
+While the original design had a 4-byte header (message_type + payload_length), implementation showed that some messages needed flexible field sizes (e.g., firmware version strings or UUIDs). To support this, I extended payload definitions to use consistent lengths to prevent parsing issues.
+
+3. Versioning and Extensibility
+While I defined support for protocol version negotiation in theory, implementing even a basic v1 version made it clear how important it is to include reserved fields and consistent structures. I reinforced the design to ensure that devices could safely ignore optional or unknown fields, improving forward compatibility.
+
+In the end, building the actual implementation showed me where my original design needed changes. It helped turn the ideas on paper into something that works in the real world.
